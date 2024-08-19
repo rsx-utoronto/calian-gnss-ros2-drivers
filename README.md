@@ -59,10 +59,6 @@ Make sure to adjust the parameters in the launch file according to your receiver
 - For more detailed instructions on configuring and using the `calian_gnss_ros2` project, refer to the [README](https://github.com/Calian-gnss/calian-gnss-ros2-drivers/calian_gnss_ros2/README.md) in the `calian_gnss_ros2` directory.
 - For information on the custom message types, see the [README](https://github.com/Calian-gnss/calian-gnss-ros2-drivers/calian_gnss_ros2_msg/README.md) in the `calian_gnss_ros2_msg` directory.
 
-## Contributing
-
-We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
