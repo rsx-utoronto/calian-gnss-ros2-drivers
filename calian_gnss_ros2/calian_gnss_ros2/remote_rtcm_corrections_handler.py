@@ -1,6 +1,6 @@
 import base64
-import rclpy
-import asyncio
+import rospy
+from std_msgs.msg import Header
 from ably import AblyRealtime
 from ably.types.message import Message
 from ably.types.connectionstate import (
@@ -9,107 +9,85 @@ from ably.types.connectionstate import (
     ConnectionStateChange,
 )
 
-from std_msgs.msg import Header
-from rclpy.node import Node
 from pyrtcm import RTCMReader
+
 from calian_gnss_ros2_msg.msg import CorrectionMessage
 from calian_gnss_ros2.logging import Logger, LoggingLevel, SimplifiedLogger
 
 
-class RemoteRtcmCorrectionsHandler(Node):
-    def __init__(self) -> None:
-        super().__init__("remote_rtcm_corrections_handler")
+class RemoteRtcmCorrectionsHandler:
+    def __init__(self):
+        rospy.init_node("remote_rtcm_corrections_handler", anonymous=True)
 
         # region Parameters declaration
-        self.declare_parameter("key", "")
-        self.declare_parameter("channel", "")
-        self.declare_parameter("save_logs", False)
-        self.declare_parameter("log_level", LoggingLevel.Info)
+        self.key = rospy.get_param("~key", "")
+        self.channel = rospy.get_param("~channel", "")
+        self.save_logs = rospy.get_param("~save_logs", False)
+        self.log_level = LoggingLevel(rospy.get_param("~log_level", LoggingLevel.Info))
         # endregion
 
-        # region Parameters Initialization
-        self.key = self.get_parameter("key").get_parameter_value().string_value
-        self.channel = self.get_parameter("channel").get_parameter_value().string_value
-        self.save_logs = (
-            self.get_parameter("save_logs").get_parameter_value().bool_value
-        )
-        self.log_level: LoggingLevel = LoggingLevel(
-            self.get_parameter("log_level").get_parameter_value().integer_value
-        )
-        # endregion
-        internal_logger = Logger(self.get_logger())
+        internal_logger = Logger(rospy.log)
         internal_logger.toggle_logs(self.save_logs)
         internal_logger.setLevel(self.log_level)
         self.logger = SimplifiedLogger("remote_rtcm_corrections_handler")
+
         # Publisher to publish RTCM corrections to Rover
-        self.rtcm_publisher = self.create_publisher(
-            CorrectionMessage, "rtcm_corrections", 50
-        )
-        asyncio.run(self.__process())
-        pass
+        self.rtcm_publisher = rospy.Publisher("rtcm_corrections", CorrectionMessage, queue_size=50)
 
-    pass
+        self.ably = AblyRealtime(self.key, auto_connect=False)
+        self.ably.connect()
+        self.ably.connection.on(self.log_events)
 
-    async def __process(self):
+        self.__process()
+
+    def __process(self):
         self.logger.info("Connecting to real-time...")
-        await self._connect_to_ably()
         self.__channel = self.ably.channels.get(self.channel)
-        await self.__channel.subscribe(
-            "RTCM Corrections", self.__process_incoming_messages
-        )
-        while rclpy.ok():
-            # await self.ably.connection.ping()
-            await self.__channel.publish_message(
+        self.__channel.subscribe("RTCM Corrections", self.__process_incoming_messages)
+
+        rate = rospy.Rate(15)  # 15 Hz
+        while not rospy.is_shutdown():
+            self.ably.connection.ping()  # Implement your own ping method if necessary
+            self.__channel.publish_message(
                 Message(
                     name="Rover Ping",
                     data=self.ably.connection.connection_manager.connection_id,
                 )
             )
-            await asyncio.sleep(15)
-        await self.ably.connection.once_async(ConnectionState.CLOSED)
-
-    async def _connect_to_ably(self):
-        # connects automatically after initialization. no need to manually connect to realtime.
-        self.ably = AblyRealtime(self.key, auto_connect=False)
-        self.ably.connect()
-        self.ably.connection.on(self.log_events)
-        await self.ably.connection.once_async(ConnectionState.CONNECTED)
+            rate.sleep()
+        self.ably.connection.once(ConnectionState.CLOSED)
 
     def log_events(self, args: ConnectionStateChange):
-        self.logger.info(
-            "connection state changed from " + args.previous + " to " + args.current
-        )
-        pass
+        self.logger.info("Connection state changed from {} to {}".format(args.previous, args.current))
 
     def __process_incoming_messages(self, message: Message):
         try:
             for msg in message.data:
+                # Use the RTCMReader to process the decoded RTCM message
+                parsed_data = RTCMReader.parse(base64.b64decode(msg))
+                
                 rtcmMessage = CorrectionMessage(
                     header=Header(
-                        stamp=self.get_clock().now().to_msg(),
+                        stamp=rospy.Time.now(),
                         frame_id=self._frame_id,
                     ),
-                    message=base64.b64decode(msg),
+                    message=parsed_data,  # Assuming parsed_data contains relevant RTCM data
                 )
                 self.rtcm_publisher.publish(rtcmMessage)
-            pass
-        except:
-            self.logger.error(
-                "Exception while processing received message. message skipped."
-            )
-            pass
+        except Exception as e:
+            self.logger.error("Exception while processing received message: {}".format(e))
 
 
 def main():
-    rclpy.init()
     rtcm_data_handler = RemoteRtcmCorrectionsHandler()
+
     try:
-        rclpy.spin(rtcm_data_handler)
+        rospy.spin()
     except KeyboardInterrupt:
         pass
-    rtcm_data_handler.destroy_node()
-    rclpy.shutdown()
 
+    # In ROS 1, nodes are cleaned up automatically on shutdown,
+    # but you can add explicit cleanup here if necessary.
 
 if __name__ == "__main__":
     main()

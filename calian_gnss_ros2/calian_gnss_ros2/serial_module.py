@@ -5,7 +5,7 @@ from typing import Literal
 import serial
 from serial.tools.list_ports import comports
 from events import Event
-import rclpy
+import rospy
 from pyubx2 import ubxreader, UBXMessage, POLL
 from pynmeagps import NMEAMessage
 from pyrtcm import RTCMMessage
@@ -158,7 +158,7 @@ class UbloxSerial:
     """
 
     def __serial_process(self) -> None:
-        while rclpy.ok():
+        while not rospy.is_shutdown():
             if not self.port_name:
                 self.logger.info("Finding port..")
                 self.port_name = SerialUtilities.get_port_from_unique_id(
@@ -240,7 +240,7 @@ class UbloxSerial:
     """
 
     def __receive_thread(self) -> None:
-        while rclpy.ok():
+        while not rospy.is_shutdown():
             if self.__port is not None and self.__port.is_open:
                 try:
                     (raw_data, parsed_data) = self.__ubr.read()
