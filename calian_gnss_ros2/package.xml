@@ -18,9 +18,9 @@
 
 <?xml version="1.0"?>
 <package format="2">
-  <name>rover</name>
-  <version>2.0.0</version>
-  <description>The Rover package</description>
+  <name>calian_gnss_ros2</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
