@@ -1,10 +1,10 @@
-calian_gnss:
-  base:
-    ros__parameters:
-      use_corrections: False
-      corrections_source: "Ntrip"
-      baud_rate: 230400
-      unique_id: "35 40 82 9F 98"
+# calian_gnss:
+#   base:
+#     ros__parameters:
+#       use_corrections: False
+#       corrections_source: "Ntrip"
+#       baud_rate: 230400
+#       unique_id: "33 40 6A 9B 9A"
     
 calian_gnss:
   rover:
@@ -13,20 +13,20 @@ calian_gnss:
       baud_rate: 230400
       unique_id: "35 40 82 9F 98"
 
-calian_gnss:
-  gps_publisher:
-    ros__parameters:
-      use_corrections: False
-      corrections_source: "Ntrip"
-      baud_rate: 230400
-      unique_id: "35 40 82 9F 98"
+# calian_gnss:
+#   gps_publisher:
+#     ros__parameters:
+#       use_corrections: False
+#       corrections_source: "Ntrip"
+#       baud_rate: 230400
+#       unique_id: "33 40 6A 9B 9A"
 
 calian_gnss:
   gps:
     ros__parameters:
       use_corrections: False
       baud_rate: 230400
-      unique_id: "35 40 82 9F 98"
+      unique_id: "33 40 6A 9B 9A"
 
 calian_gnss:
   rtcm_handler:
