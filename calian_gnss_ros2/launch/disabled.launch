@@ -1,0 +1,39 @@
+<launch>
+    <!-- Configuration Parameters -->
+    <arg name="config" default="$(find calian_gnss_ros2)/params/config.yaml" />
+    <arg name="logs_config" default="$(find calian_gnss_ros2)/params/logs.yaml" />
+    <arg name="pp_corrections_config" default="$(find calian_gnss_ros2)/params/pointperfect.yaml" />
+    <arg name="ntrip_corrections_config" default="$(find calian_gnss_ros2)/params/ntrip.yaml" />
+
+    <!-- GPS Publisher Node -->
+    <node pkg="calian_gnss_ros2" type="calian_gnss_gps" name="gps_publisher" output="screen">
+        <param name="config_file" value="$(arg config)" />
+        <param name="logs_file" value="$(arg logs_config)" />
+        <rosparam param="arguments">Disabled</rosparam>
+        <param name="namespace" value="calian_gnss" />
+    </node>
+
+    <!-- Uncomment for PointPerfect Node -->
+    <!--
+    <node pkg="calian_gnss_ros2" type="pointperfect" name="pointperfect" output="screen">
+        <param name="corrections_file" value="$(arg pp_corrections_config)" />
+        <param name="logs_file" value="$(arg logs_config)" />
+        <param name="namespace" value="calian_gnss" />
+    </node>
+    -->
+
+    <!-- Uncomment for NTRIP Client -->
+    <!--
+    <node pkg="calian_gnss_ros2" type="ntrip_client" name="ntrip_client" output="screen">
+        <param name="ntrip_config_file" value="$(arg ntrip_corrections_config)" />
+        <param name="logs_file" value="$(arg logs_config)" />
+        <param name="namespace" value="calian_gnss" />
+    </node>
+    -->
+
+    <!-- GPS Visualizer Node -->
+    <node pkg="calian_gnss_ros2" type="calian_gnss_gps_visualizer" name="gps_visualizer" output="screen">
+        <param name="port" value="8080" />
+        <param name="namespace" value="calian_gnss" />
+    </node>
+</launch>

@@ -1,0 +1,28 @@
+<launch>
+    <!-- Configuration Parameters -->
+    <arg name="config" default="$(find calian_gnss_ros2)/params/config.yaml" />
+    <arg name="logs_config" default="$(find calian_gnss_ros2)/params/logs.yaml" />
+
+    <!-- RTCM Handler Node -->
+    <node pkg="calian_gnss_ros2" type="remote_rtcm_corrections_handler" name="rtcm_handler" output="screen">
+        <param name="config_file" value="$(arg config)" />
+        <param name="logs_file" value="$(arg logs_config)" />
+        <remap from="rtcm_corrections" to="rtcm_topic" />
+        <param name="namespace" value="calian_gnss" />
+    </node>
+
+    <!-- Rover Node -->
+    <node pkg="calian_gnss_ros2" type="calian_gnss_gps" name="rover" output="screen">
+        <param name="config_file" value="$(arg config)" />
+        <param name="logs_file" value="$(arg logs_config)" />
+        <remap from="rtcm_corrections" to="rtcm_topic" />
+        <rosparam param="arguments">Rover</rosparam>
+        <param name="namespace" value="calian_gnss" />
+    </node>
+
+    <!-- GPS Visualizer Node -->
+    <node pkg="calian_gnss_ros2" type="calian_gnss_gps_visualizer" name="gps_visualizer" output="screen">
+        <param name="port" value="8080" />
+        <param name="namespace" value="calian_gnss" />
+    </node>
+</launch>
