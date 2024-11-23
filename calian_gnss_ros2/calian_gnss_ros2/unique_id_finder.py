@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 from calian_gnss_ros2.serial_module import SerialUtilities
 import rospy
