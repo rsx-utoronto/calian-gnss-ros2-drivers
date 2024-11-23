@@ -93,9 +93,9 @@ add_definitions(${PCL_DEFINITIONS})
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  msg/GnssSignalStatus.msg
-  msg/NavSatInfo.msg
-  msg/CorrectionMessage.msg
+  GnssSignalStatus.msg
+  NavSatInfo.msg
+  CorrectionMessage.msg
 )
 
 # Generate services in the 'srv' folder
