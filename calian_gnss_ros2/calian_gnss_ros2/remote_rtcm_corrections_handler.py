@@ -14,7 +14,7 @@ from ably.types.connectionstate import (
 from pyrtcm import RTCMReader
 
 from calian_gnss_ros2_msg.msg import CorrectionMessage
-from calian_gnss_ros2.logging import Logger, LoggingLevel, SimplifiedLogger
+from logging_calian import Logger, LoggingLevel, SimplifiedLogger
 
 
 class RemoteRtcmCorrectionsHandler:

@@ -6,16 +6,16 @@ import time
 from typing import Literal
 import serial
 from serial.tools.list_ports import comports
-from events import Event
-import rospy
+from events import Events as Event
 from pyubx2 import ubxreader, UBXMessage, POLL
 from pynmeagps import NMEAMessage
 from pyrtcm import RTCMMessage
 from calian_gnss_ros2_msg.msg import GnssSignalStatus
 from calian_gnss_ros2_msg.msg import NavSatInfo
 from sensor_msgs.msg import NavSatStatus
-from calian_gnss_ros2.logging import SimplifiedLogger
 import concurrent.futures
+import rospy
+from logging_calian import SimplifiedLogger
 
 
 class SerialUtilities:

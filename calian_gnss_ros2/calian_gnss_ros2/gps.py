@@ -6,12 +6,12 @@ import sys
 import base64
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Header
-from calian_gnss_ros2.pointperfect_module import PointPerfectModule
-from calian_gnss_ros2.serial_module import UbloxSerial
+# from calian_gnss_ros2.pointperfect_module import PointPerfectModule
+from serial_module import UbloxSerial
 from pynmeagps import NMEAMessage
 from pyrtcm import RTCMReader
 from calian_gnss_ros2_msg.msg import GnssSignalStatus, CorrectionMessage
-from calian_gnss_ros2.logging import Logger, LoggingLevel, SimplifiedLogger
+from logging_calian import Logger, LoggingLevel, SimplifiedLogger
 from std_srvs.srv import Empty
 from nmea_msgs.msg import Sentence
 

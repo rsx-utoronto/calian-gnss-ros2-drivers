@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-from calian_gnss_ros2.serial_module import SerialUtilities
+from serial_module import SerialUtilities
 import rospy
 import serial
 import concurrent.futures
 from serial.tools.list_ports import comports
-from calian_gnss_ros2.logging import Logger, LoggingLevel, SimplifiedLogger  # Adjust import for ROS 1
+from logging_calian import Logger, LoggingLevel, SimplifiedLogger  # Adjust import for ROS 1
 
 class UniqueIdFinder:
     def __init__(self):
