@@ -142,7 +142,7 @@ class UbloxSerial:
         self.__use_corrections = use_corrections
         self.__corrections_source = corrections_source
         self.__config_status = False
-        self.__recent_ubx_message = dict[str, (float, UBXMessage)]()
+        self.__recent_ubx_message = dict()
         self.__service_constellations = 0
         self.runTime = 0
 

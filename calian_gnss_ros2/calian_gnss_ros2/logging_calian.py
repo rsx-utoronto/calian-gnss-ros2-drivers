@@ -40,35 +40,35 @@ class Logger(object):
         return cls._instance
 
     def setLevel(cls, level: LoggingLevel) -> bool:
-        if isinstance(level, LoggingLevel):
-            if cls._internal_logger is not None:
-                cls._internal_logger.set_level(level)
-            cls._log_level = level
-            return True
-        return False
+        # if isinstance(level, LoggingLevel):
+        #     if cls._internal_logger is not None:
+        #         cls._internal_logger.set_level(level)
+        #     cls._log_level = level
+        return True
+        # return False
 
     def toggle_logs(cls, save: bool):
         cls._should_save_logs = save
 
     def info(cls, message: str):
         if cls._internal_logger is not None:
-            cls._internal_logger.info(message)
+            cls._internal_logger.loginfo(message)
 
     def debug(cls, message: str):
         if cls._internal_logger is not None:
-            cls._internal_logger.debug(message)
+            cls._internal_logger.logdebug(message)
 
     def warn(cls, message: str):
         if cls._internal_logger is not None:
-            cls._internal_logger.warn(message)
+            cls._internal_logger.logwarn(message)
 
     def error(cls, message: str):
         if cls._internal_logger is not None:
-            cls._internal_logger.error(message)
+            cls._internal_logger.logerr(message)
 
     def critical(cls, message: str):
         if cls._internal_logger is not None:
-            cls._internal_logger.fatal(message)
+            cls._internal_logger.logfatal(message)
 
     def log_to_file(cls, file_name: str, message: str):
         if cls._should_save_logs:

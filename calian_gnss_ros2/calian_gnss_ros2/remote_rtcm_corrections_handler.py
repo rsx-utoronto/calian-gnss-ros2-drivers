@@ -28,7 +28,7 @@ class RemoteRtcmCorrectionsHandler:
         self.log_level = LoggingLevel(rospy.get_param("~log_level", LoggingLevel.Info))
         # endregion
 
-        internal_logger = Logger(rospy.log)
+        internal_logger = Logger(rospy)
         internal_logger.toggle_logs(self.save_logs)
         internal_logger.setLevel(self.log_level)
         self.logger = SimplifiedLogger("remote_rtcm_corrections_handler")

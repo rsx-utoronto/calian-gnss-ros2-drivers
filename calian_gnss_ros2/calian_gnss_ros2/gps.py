@@ -20,7 +20,7 @@ class Gps:
     def __init__(self, mode: Literal["Disabled", "Heading_Base", "Rover"] = "Disabled") -> None:
         rospy.init_node("calian_gnss_gps")
 
-        internal_logger = Logger(rospy.loginfo)
+        internal_logger = Logger(rospy)
         # Parameters initialization
         self.unique_id = rospy.get_param("~unique_id", "")
         self.baud_rate = rospy.get_param("~baud_rate", 230400)
