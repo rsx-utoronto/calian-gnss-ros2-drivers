@@ -2,6 +2,19 @@
 
 This repository contains the ROS 2 package for integrating Calian Smart GNSS Antennas with ROS 2-based systems.
 
+# Installation for ROS1:
+
+Pip install the packages:
+- folium
+- pynmeagps
+- pyrtcm
+- ably
+- events
+- pyubx2
+
+sudo apt-get install the following packages:
+- python3-serial
+
 # Table of Contents
 
 - [Introduction](#introduction)
