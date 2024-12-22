@@ -12,8 +12,10 @@ Pip install the packages:
 - events
 - pyubx2
 
-sudo apt-get install the following packages:
-- python3-serial
+```
+pip install folium pynmeagps pyrtcm ably events pyubx2
+sudo apt-get install python3-serial
+```
 
 # Table of Contents
 
