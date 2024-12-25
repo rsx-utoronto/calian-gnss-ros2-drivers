@@ -13,7 +13,7 @@ class UniqueIdFinder:
         self.save_logs = rospy.get_param("~save_logs", False)
         self.log_level = rospy.get_param("~log_level", LoggingLevel.Info)
 
-        internal_logger = Logger(rospy.loginfo)
+        internal_logger = Logger(rospy)
         internal_logger.toggle_logs(self.save_logs)
         internal_logger.setLevel(self.log_level)
 
@@ -26,7 +26,8 @@ class UniqueIdFinder:
         else:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for port in ports:
-                    if "Standard" in port.description:
+                    print(port.description)
+                    if "Dual USB" in port.description:
                         try:
                             self.logger.debug("Connecting to port " + port.device)
                             standard_port = serial.Serial(port.device, 230400)
