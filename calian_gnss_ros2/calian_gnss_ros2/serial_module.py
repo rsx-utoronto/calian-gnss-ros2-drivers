@@ -278,7 +278,7 @@ class UbloxSerial:
             and message.msgUsed == 2
         ) or (message.identity != "RXM-SPARTN" and message.identity != "RXM-RTCM"):
             self.__recent_ubx_message[message.identity] = (time.time(), message)
-        self.ublox_message_found(message)
+        self.ublox_message_found.fire(message)
         pass
 
     """
@@ -301,7 +301,7 @@ class UbloxSerial:
             if message.identity == "GNGGA":
                 self.__quality = message.quality
                 pass
-        self.nmea_message_found(message)
+        self.nmea_message_found.fire(message)
         pass
 
     """
@@ -314,7 +314,7 @@ class UbloxSerial:
                 identity=message.identity, bytes=str(message)
             )
         )
-        self.rtcm_message_found(message)
+        self.rtcm_message_found.fire(message)
         pass
 
     """

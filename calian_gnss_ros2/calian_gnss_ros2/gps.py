@@ -145,7 +145,7 @@ class Gps:
             self.ser.send(rmg.serialize())
             self.logger.debug("Received RTCM message with identity: " + rmg.identity)
 
-    def get_status(self) -> None:
+    def get_status(self, event) -> None:
         status = self.ser.get_status()
 
         header = Header(stamp=rospy.Time.now(), frame_id=self._frame_id)
@@ -171,7 +171,7 @@ class Gps:
         else:
             self.base_status_publisher.publish(status)
 
-    def send_nmea_message(self) -> None:
+    def send_nmea_message(self, event) -> None:
         self.nmea_publisher.publish(
             Sentence(
                 header=Header(stamp=rospy.Time.now(), frame_id=self._frame_id),

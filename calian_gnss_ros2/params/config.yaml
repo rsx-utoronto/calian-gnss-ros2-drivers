@@ -7,7 +7,7 @@ base:
 rover:
   use_corrections: False
   baud_rate: 230400
-  unique_id: "35 40 82 9F 98"
+  unique_id: "33 40 6A 9B 9A"
 
 gps_publisher:
   use_corrections: False
@@ -18,7 +18,7 @@ gps_publisher:
 gps:
   use_corrections: False
   baud_rate: 230400
-  unique_id: "35 40 82 9F 98"
+  unique_id: "33 40 6A 9B 9A"
 
 rtcm_handler:
   key: "Wap5SA.O5VD4g:t2ltWLfva3gp5kituU5M4f9JL83BIwioTV1hGOjrSLU"
