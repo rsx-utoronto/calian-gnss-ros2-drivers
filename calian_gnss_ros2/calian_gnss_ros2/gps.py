@@ -18,28 +18,84 @@ from nmea_msgs.msg import Sentence
 
 class Gps:
     def __init__(self, mode: Literal["Disabled", "Heading_Base", "Rover"] = "Disabled") -> None:
-        rospy.init_node("calian_gnss_gps")
-
         internal_logger = Logger(rospy)
-        # Parameters initialization
-        self.unique_id = rospy.get_param("~unique_id", "")
-        self.baud_rate = rospy.get_param("~baud_rate", 230400)
-        self.use_corrections = rospy.get_param("~use_corrections", True)
-        self.corrections_source = rospy.get_param("~corrections_source", "PointPerfect")
-        self.save_logs = rospy.get_param("~save_logs", False)
-        self.log_level = rospy.get_param("~log_level", LoggingLevel.Info)
-        self._frame_id = rospy.get_param("~frame_id", "gps")
+        if mode == "Heading_Base":
+            rospy.init_node("base")
+            # Parameters initialization
+            param_prefix = "base/base/"
 
-        internal_logger.toggle_logs(self.save_logs)
-        internal_logger.setLevel(self.log_level)
-        self.logger = SimplifiedLogger(mode + "_GPS")
-        self.ser = UbloxSerial(
-            self.unique_id,
-            self.baud_rate,
-            mode,
-            self.use_corrections,
-            self.corrections_source,
-        )
+            self.unique_id = rospy.get_param((param_prefix + "unique_id"), "")
+            # print("Unique ID: " + self.unique_id)
+            self.baud_rate = rospy.get_param(param_prefix + "baud_rate", 230400)
+            self.use_corrections = rospy.get_param(param_prefix + "use_corrections", True)
+            self.corrections_source = rospy.get_param(param_prefix + "corrections_source", "PointPerfect")
+            self.save_logs = rospy.get_param(param_prefix + "save_logs", False)
+            self.log_level = rospy.get_param(param_prefix + "log_level", LoggingLevel.Info)
+            self._frame_id = rospy.get_param(param_prefix + "frame_id", "gps")
+            self.mode = mode
+
+            internal_logger.toggle_logs(self.save_logs)
+            internal_logger.setLevel(self.log_level)
+            self.logger = SimplifiedLogger(mode + "_GPS")
+            self.ser = UbloxSerial(
+                self.unique_id,
+                self.baud_rate,
+                mode,
+                self.use_corrections,
+                self.corrections_source,
+            )
+        elif mode == "Rover":
+            rospy.init_node("rover")
+
+            # Parameters initialization
+            param_prefix = "rover/rover/"
+
+            self.unique_id = rospy.get_param((param_prefix + "unique_id"), "")
+            # print("Unique ID: " + self.unique_id)
+            self.baud_rate = rospy.get_param(param_prefix + "baud_rate", 230400)
+            self.use_corrections = rospy.get_param(param_prefix + "use_corrections", True)
+            self.corrections_source = rospy.get_param(param_prefix + "corrections_source", "PointPerfect")
+            self.save_logs = rospy.get_param(param_prefix + "save_logs", False)
+            self.log_level = rospy.get_param(param_prefix + "log_level", LoggingLevel.Info)
+            self._frame_id = rospy.get_param(param_prefix + "frame_id", "gps")
+            self.mode = mode
+
+            internal_logger.toggle_logs(self.save_logs)
+            internal_logger.setLevel(self.log_level)
+            self.logger = SimplifiedLogger(mode + "_GPS")
+            self.ser = UbloxSerial(
+                self.unique_id,
+                self.baud_rate,
+                mode,
+                self.use_corrections,
+                self.corrections_source,
+            )
+        elif mode == "Disabled":
+            rospy.init_node("gps_publisher")
+
+            # Parameters initialization
+            param_prefix = "gps_publisher/gps_publisher/"
+
+            self.unique_id = rospy.get_param((param_prefix + "unique_id"), "")
+            # print("Unique ID: " + self.unique_id)
+            self.baud_rate = rospy.get_param(param_prefix + "baud_rate", 230400)
+            self.use_corrections = rospy.get_param(param_prefix + "use_corrections", True)
+            self.corrections_source = rospy.get_param(param_prefix + "corrections_source", "PointPerfect")
+            self.save_logs = rospy.get_param(param_prefix + "save_logs", False)
+            self.log_level = rospy.get_param(param_prefix + "log_level", LoggingLevel.Info)
+            self._frame_id = rospy.get_param(param_prefix + "frame_id", "gps")
+            self.mode = mode
+
+            internal_logger.toggle_logs(self.save_logs)
+            internal_logger.setLevel(self.log_level)
+            self.logger = SimplifiedLogger(mode + "_GPS")
+            self.ser = UbloxSerial(
+                self.unique_id,
+                self.baud_rate,
+                mode,
+                self.use_corrections,
+                self.corrections_source,
+            )
 
         # ROS Publishers and Subscribers
         if mode == "Heading_Base":
@@ -78,7 +134,7 @@ class Gps:
             self._recent_nmea_gga = nmeaMessage.serialize().decode("utf-8")
 
     def handle_rtcm_message(self, rtcmMessage) -> None:
-        if mode == "Heading_Base":
+        if self.mode == "Heading_Base":
             msg = CorrectionMessage(
                 header=Header(stamp=rospy.Time.now(), frame_id=self._frame_id),
                 message=rtcmMessage.serialize(),
@@ -98,7 +154,7 @@ class Gps:
         if not status.valid_fix:
             return
 
-        if mode == "Rover" or mode == "Disabled":
+        if self.mode == "Rover" or self.mode == "Disabled":
             msg = NavSatFix()
             msg.header = header
             msg.latitude = status.latitude

@@ -58,7 +58,7 @@ class SerialUtilities:
         if len(ports) != 0:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for port in ports:
-                    if port.description.find("Standard") != -1 and not port_name:
+                    if port.description.find("Dual USB") != -1 and not port_name:
                         try:
                             standard_port = serial.Serial(port.device, baudrate)
                             thread = executor.submit(

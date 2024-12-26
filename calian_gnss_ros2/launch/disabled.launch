@@ -1,16 +1,18 @@
 <launch>
     <!-- Configuration Parameters -->
-    <arg name="config" default="$(find calian_gnss_ros2)/params/config.yaml" />
+    <!-- <arg name="config" default="$(find calian_gnss_ros2)/params/config.yaml" />
     <arg name="logs_config" default="$(find calian_gnss_ros2)/params/logs.yaml" />
     <arg name="pp_corrections_config" default="$(find calian_gnss_ros2)/params/pointperfect.yaml" />
-    <arg name="ntrip_corrections_config" default="$(find calian_gnss_ros2)/params/ntrip.yaml" />
+    <arg name="ntrip_corrections_config" default="$(find calian_gnss_ros2)/params/ntrip.yaml" /> -->
 
     <!-- GPS Publisher Node -->
-    <node pkg="calian_gnss_ros2" type="gps.py" name="gps_publisher" output="screen">
-        <param name="config_file" value="$(arg config)" />
-        <param name="logs_file" value="$(arg logs_config)" />
-        <rosparam param="arguments">Disabled</rosparam>
-        <param name="namespace" value="calian_gnss" />
+    <node pkg="calian_gnss_ros2" type="gps.py" name="gps_publisher" output="screen" args="Disabled">
+        <rosparam file="$(find calian_gnss_ros2)/params/config.yaml" command="load"/> 
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+        <param name="emulate_tty" value="true" />
+
+        <!-- <rosparam param="arguments">Disabled</rosparam> -->
+        <!-- <param name="namespace" value="calian_gnss" /> -->
     </node>
 
     <!-- Uncomment for PointPerfect Node -->
@@ -34,6 +36,6 @@
     <!-- GPS Visualizer Node -->
     <node pkg="calian_gnss_ros2" type="gps_visualizer.py" name="gps_visualizer" output="screen">
         <param name="port" value="8080" />
-        <param name="namespace" value="calian_gnss" />
+        <param name="emulate_tty" value="false" />
     </node>
 </launch>
