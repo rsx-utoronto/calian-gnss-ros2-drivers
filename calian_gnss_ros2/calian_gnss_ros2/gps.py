@@ -101,7 +101,7 @@ class Gps:
         if mode == "Heading_Base":
             self.rtcm_publisher = rospy.Publisher("rtcm_corrections", CorrectionMessage, queue_size=100)
             self.base_status_publisher = rospy.Publisher("base_gps_extended", GnssSignalStatus, queue_size=50)
-            self.ser.rtcm_message_found += self.handle_rtcm_message
+            self.ser.rtcm_message_found.fire += self.handle_rtcm_message
             self.rtcm_msg_pool = []
             rospy.Timer(rospy.Duration(0.5), self.publish_pooled_rtcm)
         elif mode == "Rover":
@@ -123,7 +123,7 @@ class Gps:
                 self.nmea_publisher = rospy.Publisher("nmea", Sentence, queue_size=100)
                 rospy.Timer(rospy.Duration(1), self.send_nmea_message)
                 self._recent_nmea_gga = ""
-                self.ser.nmea_message_found += self.handle_nmea_message
+                self.ser.nmea_message_found.fire += self.handle_nmea_message
 
     def handle_correction_message(self, message) -> None:
         self.logger.debug("Sending correction message: " + message.message.tobytes().hex(" "))

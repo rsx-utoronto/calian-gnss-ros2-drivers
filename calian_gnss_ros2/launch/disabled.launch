@@ -1,40 +1,29 @@
 <launch>
-    <!-- Configuration Parameters -->
-    <!-- <arg name="config" default="$(find calian_gnss_ros2)/params/config.yaml" />
-    <arg name="logs_config" default="$(find calian_gnss_ros2)/params/logs.yaml" />
-    <arg name="pp_corrections_config" default="$(find calian_gnss_ros2)/params/pointperfect.yaml" />
-    <arg name="ntrip_corrections_config" default="$(find calian_gnss_ros2)/params/ntrip.yaml" /> -->
 
     <!-- GPS Publisher Node -->
-    <node pkg="calian_gnss_ros2" type="gps.py" name="gps_publisher" output="screen" args="Disabled">
+    <node pkg="calian_gnss_ros2" type="gps.py" name="gps_publisher" output="screen" args="Disabled" ns="calian_gnss">
         <rosparam file="$(find calian_gnss_ros2)/params/config.yaml" command="load"/> 
         <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
         <param name="emulate_tty" value="true" />
-
-        <!-- <rosparam param="arguments">Disabled</rosparam> -->
-        <!-- <param name="namespace" value="calian_gnss" /> -->
     </node>
 
     <!-- Uncomment for PointPerfect Node -->
-    <!--
-    <node pkg="calian_gnss_ros2" type="pointperfect" name="pointperfect" output="screen">
-        <param name="corrections_file" value="$(arg pp_corrections_config)" />
-        <param name="logs_file" value="$(arg logs_config)" />
-        <param name="namespace" value="calian_gnss" />
-    </node>
-    -->
+    
+    <!-- <node pkg="calian_gnss_ros2" type="pointperfect_module.py" name="pointperfect" output="screen" ns="calian_gnss">
+        <rosparam file="$(find calian_gnss_ros2)/params/pointperfect.yaml" command="load"/>
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+    </node> -->
+   
 
     <!-- Uncomment for NTRIP Client -->
-    <!--
-    <node pkg="calian_gnss_ros2" type="ntrip_client" name="ntrip_client" output="screen">
-        <param name="ntrip_config_file" value="$(arg ntrip_corrections_config)" />
-        <param name="logs_file" value="$(arg logs_config)" />
-        <param name="namespace" value="calian_gnss" />
-    </node>
-    -->
+    <!-- <node pkg="calian_gnss_ros2" type="ntrip_module.py" name="ntrip" output="screen" ns="calian_gnss">
+        <rosparam file="$(find calian_gnss_ros2)/params/ntrip.yaml" command="load"/>
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+    </node> -->
+   
 
     <!-- GPS Visualizer Node -->
-    <node pkg="calian_gnss_ros2" type="gps_visualizer.py" name="gps_visualizer" output="screen">
+    <node pkg="calian_gnss_ros2" type="gps_visualizer.py" name="gps_visualizer" output="screen" ns="calian_gnss">
         <param name="port" value="8080" />
         <param name="emulate_tty" value="false" />
     </node>
