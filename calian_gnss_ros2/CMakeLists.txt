@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   calian_gnss_ros2_msg
-  serial
+  # serial
   message_generation
   message_filters
   tf2_ros
