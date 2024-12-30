@@ -15,6 +15,7 @@ Pip install the packages:
 ```
 pip install folium pynmeagps pyrtcm ably events pyubx2
 sudo apt-get install python3-serial
+sudo apt-get install ros-noetic-nmea-msgs
 cd ~/catkin_ws/src/calian-gnss-ros2-drivers/
 git checkout ros1
 ```
