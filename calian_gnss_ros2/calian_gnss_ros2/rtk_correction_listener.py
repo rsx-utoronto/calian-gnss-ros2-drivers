@@ -2,7 +2,7 @@
 
 
 """
-Filename: rtk_correction_listner.py
+Filename: rtk_correction_listener.py
 
 Listen to TruPrecision serial data sent from Windows computer on local network over socket and publish ROS topic
 
@@ -62,7 +62,7 @@ class RTKListener:
                     while not rospy.is_shutdown():
                         Correction = CorrectionMessage()
                         Correction.header.stamp = rospy.Time.now()
-                        Correction.header.frame_id = ""
+                        Correction.header.frame_id = "gps"
 
                         # Received data
                         data = conn.recv(1024)

@@ -1,5 +1,5 @@
 base:
-  use_corrections: False
+  use_corrections: True
   corrections_source: "Ntrip"
   baud_rate: 230400
   unique_id: "35 40 82 9F 98"

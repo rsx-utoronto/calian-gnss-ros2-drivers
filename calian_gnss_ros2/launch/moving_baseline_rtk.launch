@@ -1,0 +1,42 @@
+<launch>
+    <!-- RTK Corrections Listner -->
+
+    <node pkg="calian_gnss_ros2" type="rtk_correction_listener.py" name="rtk_corrections_listener" output="screen" ns="calian_gnss"/>
+
+    <!-- Base Node -->
+    <node pkg="calian_gnss_ros2" type="gps.py" name="base" output="screen" args="Heading_Base" ns="calian_gnss">
+        <rosparam file="$(find calian_gnss_ros2)/params/config.yaml" command="load"/> 
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+    <!-- <remap from="rtcm_corrections" to="rtcm_topic" /> -->
+        <remap from="corrections" to="rtk_corrections" />
+        <param name="emulate_tty" value="true" />
+    </node>
+
+    <!-- Uncomment for PointPerfect Node -->
+    
+    <!-- <node pkg="calian_gnss_ros2" type="pointperfect_module.py" name="pointperfect" output="screen" ns="calian_gnss">
+        <rosparam file="$(find calian_gnss_ros2)/params/pointperfect.yaml" command="load"/>
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+    </node> -->
+   
+
+    <!-- Uncomment for NTRIP Client -->
+    <!-- <node pkg="calian_gnss_ros2" type="ntrip_module.py" name="ntrip" output="screen" ns="calian_gnss">
+        <rosparam file="$(find calian_gnss_ros2)/params/ntrip.yaml" command="load"/>
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+    </node> -->
+
+    <!-- Rover Node -->
+    <node pkg="calian_gnss_ros2" type="gps.py" name="rover" output="screen" args="Rover" ns="calian_gnss">
+        <rosparam file="$(find calian_gnss_ros2)/params/config.yaml" command="load"/> 
+        <rosparam file="$(find calian_gnss_ros2)/params/logs.yaml" command="load" /> 
+        <!-- <remap from="rtcm_corrections" to="rtcm_topic" /> -->
+        <param name="emulate_tty" value="true" />
+    </node>
+
+    <!-- GPS Visualizer Node -->
+    <node pkg="calian_gnss_ros2" type="gps_visualizer.py" name="gps_visualizer" output="screen" ns="calian_gnss">
+        <param name="port" value="8080" />
+        <param name="emulate_tty" value="false" />
+    </node>
+</launch>

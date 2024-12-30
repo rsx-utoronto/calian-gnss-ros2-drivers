@@ -18,6 +18,7 @@ sudo apt-get install python3-serial
 sudo apt-get install ros-noetic-nmea-msgs
 cd ~/catkin_ws/src/calian-gnss-ros2-drivers/
 git checkout ros1
+sudo adduser $USER dialout
 ```
 
 # Table of Contents

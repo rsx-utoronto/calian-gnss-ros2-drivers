@@ -126,8 +126,8 @@ class Gps:
                 self.ser.nmea_message_found.fire += self.handle_nmea_message
 
     def handle_correction_message(self, message) -> None:
-        self.logger.debug("Sending correction message: " + message.message.tobytes().hex(" "))
-        self.ser.send(message.message.tobytes())
+        self.logger.debug("Sending correction message: " + message.message.hex(" "))
+        self.ser.send(message.message)
 
     def handle_nmea_message(self, nmeaMessage: NMEAMessage) -> None:
         if nmeaMessage.identity == "GNGGA" and self.use_corrections and self.corrections_source == "Ntrip":
