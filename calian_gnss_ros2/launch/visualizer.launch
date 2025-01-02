@@ -1,0 +1,8 @@
+<launch>
+    <!-- GPS Visualizer Node -->
+    <node pkg="calian_gnss_ros2" type="gps_visualizer.py" name="gps_visualizer" output="screen" ns="calian_gnss">
+        <param name="port" value="8080" />
+        <param name="emulate_tty" value="false" />
+    </node>
+
+</launch>
