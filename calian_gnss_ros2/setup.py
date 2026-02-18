@@ -53,6 +53,7 @@ setup(
             "unique_id_finder = calian_gnss_ros2.unique_id_finder:main",
             "pointperfect = calian_gnss_ros2.pointperfect_module:main",
             "ntrip_client = calian_gnss_ros2.ntrip_module:main",
+            "rtk_correction_listener = calian_gnss_ros2.rtk_correction_listener:main",
         ],
     },
 )
