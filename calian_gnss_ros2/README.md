@@ -1,3 +1,9 @@
+# Important Note:
+To access the serial port, user may need to add themselve to the "dialout" group
+```bash
+sudo usermod -aG dialout <username>
+```
+
 # :world_map: Calian GNSS ROS 2 Driver
 
 This repository contains the ROS 2 package for integrating Calian Smart GNSS Antennas with ROS 2-based systems.

@@ -57,6 +57,7 @@ class SerialUtilities:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for port in ports:
                     if port.description.find("Standard") != -1 and not port_name:
+                        standard_port = None
                         try:
                             standard_port = serial.Serial(port.device, baudrate)
                             thread = executor.submit(
@@ -72,7 +73,8 @@ class SerialUtilities:
                             failed_ports.append(port.device)
                             pass
                         finally:
-                            standard_port.close()
+                            if standard_port is not None:
+                                standard_port.close()
                             standard_port = None
                             if port_name:
                                 break
@@ -81,6 +83,7 @@ class SerialUtilities:
 
                 # trying again for the failed port...need to do this because of race conditions.
                 for port in failed_ports:
+                    standard_port = None
                     try:
                         standard_port = serial.Serial(port, baudrate)
                         thread = executor.submit(
@@ -95,7 +98,8 @@ class SerialUtilities:
                     except:
                         pass
                     finally:
-                        standard_port.close()
+                        if standard_port is not None:
+                            standard_port.close()
                         standard_port = None
                         if port_name:
                             break
