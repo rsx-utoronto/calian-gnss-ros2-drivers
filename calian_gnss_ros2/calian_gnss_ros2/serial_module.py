@@ -1,7 +1,7 @@
 from collections import UserList
 import threading
 import time
-from typing import Literal
+from typing import Callable, Literal
 import serial
 from serial.tools.list_ports import comports
 from events import Event
@@ -14,6 +14,12 @@ from calian_gnss_ros2_msg.msg import NavSatInfo
 from sensor_msgs.msg import NavSatStatus
 from calian_gnss_ros2.logging import SimplifiedLogger
 import concurrent.futures
+
+
+# Multiple GNSS nodes (base/rover) run in separate processes and can rapidly
+# re-open CP210x ports at the same time. A lock + cooldown reduces USB bus
+# hammering when the adapter is unstable.
+_SERIAL_SCAN_LOCK = threading.Lock()
 
 
 class SerialUtilities:
@@ -39,6 +45,33 @@ class SerialUtilities:
                 return ""
         return ""
 
+    @staticmethod
+    def get_device_serial_number(port_device: str) -> str:
+        try:
+            for port in comports():
+                if port.device == port_device:
+                    return (port.serial_number or "").strip()
+        except Exception:
+            pass
+        return ""
+
+    @staticmethod
+    def get_standard_port_for_serial_number(serial_number: str) -> str:
+        serial_number = serial_number.strip()
+        if not serial_number:
+            return ""
+
+        standard_ports = []
+        for port in comports():
+            if port.serial_number == serial_number and "Standard" in port.description:
+                standard_ports.append(port.device)
+
+        if len(standard_ports) == 1:
+            return standard_ports[0]
+        if len(standard_ports) > 1:
+            return sorted(standard_ports)[0]
+        return ""
+
     """
         Finds out the serial port which has antenna connected with the given unique id
     """
@@ -49,65 +82,157 @@ class SerialUtilities:
         baudrate: Literal[
             1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800
         ],
+        log_message: Callable[[str], None] = None,
     ) -> str:
-        port_name = ""
-        ports = comports()
-        failed_ports = []
-        if len(ports) != 0:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                for port in ports:
-                    if port.description.find("Standard") != -1 and not port_name:
+        with _SERIAL_SCAN_LOCK:
+            port_name = ""
+            target_unique_id = unique_id.upper().strip()
+            ports = list(comports())
+            failed_ports = []
+            io_error_detected = False
+            if log_message is not None:
+                port_summary = [
+                    f"{p.device} ({p.description})" for p in ports
+                ]
+                log_message(
+                    f"Serial scan start: target unique id '{target_unique_id}', baudrate {baudrate}, ports: {port_summary}"
+                )
+
+            # First narrow the search to each CP2105 adapter pair by USB serial
+            # number. The user-visible ttyUSB endpoints come in Standard/Enhanced
+            # pairs and the Standard endpoint is the one we want to probe.
+            serial_numbers = []
+            for port in ports:
+                if port.serial_number and port.serial_number not in serial_numbers:
+                    serial_numbers.append(port.serial_number)
+
+            candidate_ports = []
+            for serial_number in serial_numbers:
+                standard_port = SerialUtilities.get_standard_port_for_serial_number(
+                    serial_number
+                )
+                if standard_port:
+                    candidate_ports.append(standard_port)
+
+            if candidate_ports:
+                candidate_ports = sorted(set(candidate_ports))
+                if log_message is not None:
+                    log_message(
+                        f"Candidate standard ports by USB serial: {candidate_ports}"
+                    )
+                ports = [port for port in ports if port.device in candidate_ports]
+
+            if len(ports) != 0:
+                # Prioritize "Standard" endpoints first, then probe all others.
+                ports.sort(
+                    key=lambda p: (0 if "Standard" in p.description else 1, p.device)
+                )
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    for port in ports:
+                        if not port_name:
+                            standard_port = None
+                            try:
+                                # Finite timeout is required; otherwise UBXReader.read() can
+                                # block forever and discovery never completes.
+                                standard_port = serial.Serial(
+                                    port.device,
+                                    baudrate,
+                                    timeout=0.5,
+                                    write_timeout=0.5,
+                                )
+                                thread = executor.submit(
+                                    SerialUtilities.extract_unique_id_of_port,
+                                    standard_port=standard_port,
+                                    timeout=3,
+                                )
+                                unique_id_of_port = thread.result(3)
+                                if log_message is not None:
+                                    log_message(
+                                        f"Probed {port.device} ({port.description}) -> unique id '{unique_id_of_port}'"
+                                    )
+                                if (
+                                    unique_id_of_port
+                                    and unique_id_of_port.upper().strip()
+                                    == target_unique_id
+                                ):
+                                    port_name = port.device
+                            except Exception as ex:
+                                if "Input/output error" in str(ex):
+                                    io_error_detected = True
+                                failed_ports.append(port.device)
+                                if log_message is not None:
+                                    log_message(
+                                        f"Probe failed for {port.device} ({port.description}): {ex}; scheduling retry"
+                                    )
+                            finally:
+                                try:
+                                    if standard_port is not None:
+                                        standard_port.close()
+                                except Exception:
+                                    pass
+                                standard_port = None
+                                if port_name:
+                                    break
+
+                    # trying again for the failed port...need to do this because of race conditions.
+                    for port in failed_ports:
                         standard_port = None
                         try:
-                            standard_port = serial.Serial(port.device, baudrate)
+                            standard_port = serial.Serial(
+                                port,
+                                baudrate,
+                                timeout=0.5,
+                                write_timeout=0.5,
+                            )
                             thread = executor.submit(
                                 SerialUtilities.extract_unique_id_of_port,
                                 standard_port=standard_port,
                                 timeout=3,
                             )
                             unique_id_of_port = thread.result(3)
-                            if unique_id_of_port.upper() == unique_id.upper():
-                                port_name = port.device
-                            pass
-                        except:
-                            failed_ports.append(port.device)
-                            pass
+                            if log_message is not None:
+                                log_message(
+                                    f"Retry probe {port} -> unique id '{unique_id_of_port}'"
+                                )
+                            if (
+                                unique_id_of_port
+                                and unique_id_of_port.upper().strip() == target_unique_id
+                            ):
+                                port_name = port
+                        except Exception as ex:
+                            if "Input/output error" in str(ex):
+                                io_error_detected = True
+                            if log_message is not None:
+                                log_message(f"Retry probe failed for {port}: {ex}")
                         finally:
-                            if standard_port is not None:
-                                standard_port.close()
+                            try:
+                                if standard_port is not None:
+                                    standard_port.close()
+                            except Exception:
+                                pass
                             standard_port = None
                             if port_name:
                                 break
-                            pass
-                    pass
-
-                # trying again for the failed port...need to do this because of race conditions.
-                for port in failed_ports:
-                    standard_port = None
-                    try:
-                        standard_port = serial.Serial(port, baudrate)
-                        thread = executor.submit(
-                            SerialUtilities.extract_unique_id_of_port,
-                            standard_port=standard_port,
-                            timeout=3,
-                        )
-                        unique_id_of_port = thread.result(3)
-                        if unique_id_of_port.upper() == unique_id.upper():
-                            port_name = port
-                        pass
-                    except:
-                        pass
-                    finally:
-                        if standard_port is not None:
-                            standard_port.close()
-                        standard_port = None
-                        if port_name:
-                            break
-                        pass
-        if not port_name:
-            return ""
-        else:
-            return port_name
+            else:
+                if log_message is not None:
+                    log_message("Serial scan found no available COM ports")
+            if log_message is not None and port_name:
+                log_message(
+                    f"Serial scan matched unique id '{target_unique_id}' to port {port_name}"
+                )
+            elif log_message is not None:
+                log_message(
+                    f"Serial scan did not find matching unique id '{target_unique_id}'"
+                )
+                if io_error_detected:
+                    log_message(
+                        "Detected tty Input/output errors while opening ports. This is usually host-side contention or device state (e.g., ModemManager/other ROS stacks using ttyUSB, or USB link reset)."
+                    )
+                    time.sleep(2.0)
+            if not port_name:
+                return ""
+            else:
+                return port_name
 
 
 class UbloxSerial:
@@ -164,9 +289,9 @@ class UbloxSerial:
     def __serial_process(self) -> None:
         while rclpy.ok():
             if not self.port_name:
-                self.logger.info("Finding port..")
+                self.logger.info(f"Finding port..{self.unique_id}")
                 self.port_name = SerialUtilities.get_port_from_unique_id(
-                    self.unique_id, self.baudrate
+                    self.unique_id, self.baudrate, self.logger.info
                 )
             elif self.__port is None or not self.__config_status:
                 self.__setup_serial_port_and_reader(self.port_name, self.baudrate)

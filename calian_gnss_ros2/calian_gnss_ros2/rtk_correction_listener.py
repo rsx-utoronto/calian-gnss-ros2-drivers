@@ -1,68 +1,105 @@
+#!/usr/bin/env python3
+
+
+"""
+Filename: rtk_correction_listener.py
+
+Listen to TruPrecision serial data sent from Windows computer on local network over socket and publish ROS topic
+
+Server-side (Ubuntu, ROS) script
+
+Client-side code script is available at
+https://github.com/rsx-utoronto/calian-windows-transfer/blob/main/reader-truprecision.py
+
+Robotics for Space Exploration - University of Toronto
+
+Author: Jason Li <jasonli.li@mail.utoronto.ca>
+Date: 2024-11-23
+"""
+
+
 import socket
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Header
 from calian_gnss_ros2_msg.msg import CorrectionMessage
 
 
-class RTKCorrectionListener(Node):
-    def __init__(self):
-        super().__init__("rtk_correction_listener")
+class RTKListener(Node):
+    def __init__(self, host, port):
+        # ROS setup -------------------------------------
+        super().__init__('rtk_listener')
+        
+        self.topic_name = 'rtk_corrections'
+        self.pub = self.create_publisher(CorrectionMessage, self.topic_name, 10)
 
-        self.declare_parameter("host", "192.168.2.88")
-        self.declare_parameter("port", 5409)
+        # -----------------------------------------------
 
-        self.host = self.get_parameter("host").get_parameter_value().string_value
-        self.port = self.get_parameter("port").get_parameter_value().integer_value
+        # Ensure that these are the same on the Windows-side Python script.
+        # HOST should be the Ubuntu computer's local IP, and
+        # PORT should be an available port on the Ubuntu computer.
+        # This is to send the data to the Ubuntu computer.
 
-        self.pub = self.create_publisher(CorrectionMessage, "rtk_corrections", 10)
-
-        self.get_logger().info(
-            f"RTK Correction Listener starting on {self.host}:{self.port}"
-        )
-        self.socket_listener()
-
+        self.HOST = host
+        self.PORT = port
+    
     def socket_listener(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.bind((self.host, self.port))
+            s.bind((self.HOST, self.PORT))
             s.listen()
 
             self.get_logger().info("Ready for connection from Windows")
 
+            rate = self.create_rate(10)
             while rclpy.ok():
+                # Found connection
                 conn, addr = s.accept()
                 with conn:
                     self.get_logger().info(f"Connected by {addr}")
 
                     while rclpy.ok():
-                        correction = CorrectionMessage()
-                        correction.header = Header()
-                        correction.header.stamp = self.get_clock().now().to_msg()
-                        correction.header.frame_id = "gps"
+                        Correction = CorrectionMessage()
+                        Correction.header.stamp = self.get_clock().now().to_msg()
+                        Correction.header.frame_id = "gps"
 
+                        # Received data
                         data = conn.recv(1024)
                         if data:
-                            correction.message = list(data)
-                            self.pub.publish(correction)
+
+                            # byte_array = UInt8MultiArray()
+                            byte_array = list(data)
+                            Correction.message = byte_array
+                            self.pub.publish(Correction)                                
+
+                        # Disconnect when data has stopped
+                        # Outer while loop will wait for connection again
                         else:
                             break
+                        rate.sleep()
 
-                self.get_logger().info(
-                    "Shutting down TruPrecision ROS listener node."
-                )
-
+                self.get_logger().info("Shutting down TruPrecision ROS listener node.")
+                rate.sleep()
 
 def main(args=None):
+    # Ensure that these are the same on the Windows-side Python script.
+    # HOST should be the Ubuntu computer's local IP, and
+    # PORT should be an available port on the Ubuntu computer.
+    # This is to send the data to the Ubuntu computer.
+    HOST = "192.168.0.125"
+    PORT = 5409
+
     rclpy.init(args=args)
-    node = RTKCorrectionListener()
+    
+    rtk_listener = RTKListener(HOST, PORT)
+    
     try:
-        rclpy.spin(node)
+        rtk_listener.socket_listener()
     except KeyboardInterrupt:
         pass
-    node.destroy_node()
-    rclpy.shutdown()
+    finally:
+        rtk_listener.destroy_node()
+        rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

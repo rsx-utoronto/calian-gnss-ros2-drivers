@@ -1,88 +1,106 @@
-import os
-from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+import os
 
 
 def generate_launch_description():
-    config = os.path.join(
-        get_package_share_directory("calian_gnss_ros2"), "params", "config.yaml"
-    )
+    
+    # Get the package share directory
+    pkg_share = get_package_share_directory('calian_gnss_ros2')
+    
+    # Path to parameter files
+    config_file = os.path.join(pkg_share, 'params', 'config.yaml')
+    logs_file = os.path.join(pkg_share, 'params', 'logs.yaml')
+    # pointperfect_file = os.path.join(pkg_share, 'params', 'pointperfect.yaml')
+    # ntrip_file = os.path.join(pkg_share, 'params', 'ntrip.yaml')
 
-    corrections_config = os.path.join(
-        get_package_share_directory("calian_gnss_ros2"), "params", "pointperfect.yaml"
-    )
+    return LaunchDescription([
+        
+        # RTK Corrections Listener
+        Node(
+            package='calian_gnss_ros2',
+            executable='rtk_correction_listener',
+            name='rtk_corrections_listener',
+            namespace='calian_gnss',
+            output='screen',
+            emulate_tty=True
+        ),
 
-    ntrip_corrections_config = os.path.join(
-        get_package_share_directory("calian_gnss_ros2"), "params", "ntrip.yaml"
-    )
+        # Base Node
+        Node(
+            package='calian_gnss_ros2',
+            executable='calian_gnss_gps',
+            name='base',
+            namespace='calian_gnss',
+            output='screen',
+            arguments=['Heading_Base'],
+            parameters=[
+                config_file,
+                logs_file,
+                {'emulate_tty': True}
+            ],
+            remappings=[
+                ('corrections', 'rtk_corrections')
+            ],
+            emulate_tty=True
+        ),
 
-    logs_config = os.path.join(
-        get_package_share_directory("calian_gnss_ros2"), "params", "logs.yaml"
-    )
+        # Uncomment for PointPerfect Node
+        # Node(
+        #     package='calian_gnss_ros2',
+        #     executable='pointperfect_module.py',
+        #     name='pointperfect',
+        #     namespace='calian_gnss',
+        #     output='screen',
+        #     parameters=[
+        #         pointperfect_file,
+        #         logs_file
+        #     ],
+        #     emulate_tty=True
+        # ),
 
-    return LaunchDescription(
-        [
-            # RTK Corrections Listener
-            Node(
-                package="calian_gnss_ros2",
-                executable="rtk_correction_listener",
-                name="rtk_corrections_listener",
-                output="screen",
-                namespace="calian_gnss",
-            ),
-            # Base Node
-            Node(
-                package="calian_gnss_ros2",
-                executable="calian_gnss_gps",
-                name="base",
-                output="screen",
-                emulate_tty=True,
-                parameters=[config, logs_config],
-                namespace="calian_gnss",
-                remappings=[("corrections", "rtk_corrections")],
-                arguments=["Heading_Base"],
-            ),
-            # Uncomment for PointPerfect Node
-            # Node(
-            #     package="calian_gnss_ros2",
-            #     executable="pointperfect",
-            #     name="pointperfect",
-            #     output="screen",
-            #     emulate_tty=True,
-            #     parameters=[corrections_config, logs_config],
-            #     namespace="calian_gnss",
-            # ),
-            # Uncomment for NTRIP Client
-            # Node(
-            #     package="calian_gnss_ros2",
-            #     executable="ntrip_client",
-            #     name="ntrip",
-            #     output="screen",
-            #     emulate_tty=True,
-            #     parameters=[ntrip_corrections_config, logs_config],
-            #     namespace="calian_gnss",
-            # ),
-            # Rover Node
-            Node(
-                package="calian_gnss_ros2",
-                executable="calian_gnss_gps",
-                name="rover",
-                output="screen",
-                emulate_tty=True,
-                parameters=[config, logs_config],
-                namespace="calian_gnss",
-                arguments=["Rover"],
-            ),
-            # GPS Visualizer Node
-            Node(
-                package="calian_gnss_ros2",
-                executable="calian_gnss_gps_visualizer",
-                name="gps_visualizer",
-                output="screen",
-                emulate_tty=False,
-                parameters=[{"port": 8080}],
-                namespace="calian_gnss",
-            ),
-        ]
-    )
+        # Uncomment for NTRIP Client
+        # Node(
+        #     package='calian_gnss_ros2',
+        #     executable='ntrip_module.py',
+        #     name='ntrip',
+        #     namespace='calian_gnss',
+        #     output='screen',
+        #     parameters=[
+        #         ntrip_file,
+        #         logs_file
+        #     ],
+        #     emulate_tty=True
+        # ),
+
+        # Rover Node
+        Node(
+            package='calian_gnss_ros2',
+            executable='calian_gnss_gps',
+            name='rover',
+            namespace='calian_gnss',
+            output='screen',
+            arguments=['Rover'],
+            parameters=[
+                config_file,
+                logs_file,
+                {'emulate_tty': True}
+            ],
+            emulate_tty=True
+        ),
+
+        # GPS Visualizer Node
+        Node(
+            package='calian_gnss_ros2',
+            executable='calian_gnss_gps_visualizer',
+            name='gps_visualizer',
+            namespace='calian_gnss',
+            output='screen',
+            parameters=[
+                {'port': 8080},
+                {'emulate_tty': False}
+            ],
+            emulate_tty=False
+        ),
+    ])
